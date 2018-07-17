@@ -3,8 +3,9 @@ import scipy.misc
 import scipy.signal
 import math
 
-#import draw
-#import ref
+
+# import draw
+# import ref
 
 # =============================================================================
 # General image processing functions
@@ -12,8 +13,8 @@ import math
 
 def get_transform(center, scale, res, rot=0):
     # Generate transformation matrix
-    #h = 200 * scale
-    #h = 100 * scale
+    # h = 200 * scale
+    # h = 100 * scale
     h = scale
     t = np.zeros((3, 3))
     t[0, 0] = float(res[1]) / h
@@ -22,21 +23,22 @@ def get_transform(center, scale, res, rot=0):
     t[1, 2] = res[0] * (-float(center[1]) / h + .5)
     t[2, 2] = 1
     if not rot == 0:
-        rot = -rot # To match direction of rotation from cropping
-        rot_mat = np.zeros((3,3))
+        rot = -rot  # To match direction of rotation from cropping
+        rot_mat = np.zeros((3, 3))
         rot_rad = rot * np.pi / 180
-        sn,cs = np.sin(rot_rad), np.cos(rot_rad)
-        rot_mat[0,:2] = [cs, -sn]
-        rot_mat[1,:2] = [sn, cs]
-        rot_mat[2,2] = 1
+        sn, cs = np.sin(rot_rad), np.cos(rot_rad)
+        rot_mat[0, :2] = [cs, -sn]
+        rot_mat[1, :2] = [sn, cs]
+        rot_mat[2, 2] = 1
         # Need to rotate around center
         t_mat = np.eye(3)
-        t_mat[0,2] = -res[1]/2
-        t_mat[1,2] = -res[0]/2
+        t_mat[0, 2] = -res[1] / 2
+        t_mat[1, 2] = -res[0] / 2
         t_inv = t_mat.copy()
-        t_inv[:2,2] *= -1
-        t = np.dot(t_inv,np.dot(rot_mat,np.dot(t_mat,t)))
+        t_inv[:2, 2] *= -1
+        t = np.dot(t_inv, np.dot(rot_mat, np.dot(t_mat, t)))
     return t
+
 
 def transform(pt, center, scale, res, invert=0, rot=0):
     # Transform pixel location to different reference
@@ -45,15 +47,17 @@ def transform(pt, center, scale, res, invert=0, rot=0):
         t = np.linalg.inv(t)
     new_pt = np.array([pt[0], pt[1], 1.]).T
     new_pt = np.dot(t, new_pt)
-    #print('new_pt', new_pt.shape, new_pt)
+    # print('new_pt', new_pt.shape, new_pt)
     return new_pt[:2].astype(int)
 
-def crop_center(img,crop_size):
-    y,x = img.shape[0], img.shape[1]
-    startx = x//2-(crop_size[1]//2)
-    starty = y//2-(crop_size[0]//2)    
-    #print(startx, starty, crop_size)
-    return img[starty:(starty+crop_size[0]),startx:(startx+crop_size[1]),:]
+
+def crop_center(img, crop_size):
+    y, x = img.shape[0], img.shape[1]
+    startx = x // 2 - (crop_size[1] // 2)
+    starty = y // 2 - (crop_size[0] // 2)
+    # print(startx, starty, crop_size)
+    return img[starty:(starty + crop_size[0]), startx:(startx + crop_size[1]), :]
+
 
 def crop(img, center, scale, res, rot=0):
     # Upper left point
@@ -71,7 +75,7 @@ def crop(img, center, scale, res, rot=0):
     if len(img.shape) > 2:
         new_shape += [img.shape[2]]
     new_img = np.zeros(new_shape)
-    #print('new_img', new_img.shape)
+    # print('new_img', new_img.shape)
 
     # Range to fill new array
     new_x = max(0, -ul[0]), min(br[0], len(img[0])) - ul[0]
@@ -83,21 +87,23 @@ def crop(img, center, scale, res, rot=0):
 
     if not rot == 0:
         # Remove padding
-        #print('before rotate', new_img.shape, rot)
+        # print('before rotate', new_img.shape, rot)
         new_img = scipy.misc.imrotate(new_img, rot)
         new_img = new_img[pad:-pad, pad:-pad]
 
     return scipy.misc.imresize(new_img, res)
 
+
 def crop2(img, center, scale, res, rot=0):
     # Upper left point
-    rad = np.min( [center[0], img.shape[0] - center[0], center[1], img.shape[1] - center[1]] )
-    new_img = img[(center[0]-rad):(center[0]+rad),(center[1]-rad):(center[1]+rad),:]
-    #print('new_img', new_img.shape)
+    rad = np.min([center[0], img.shape[0] - center[0], center[1], img.shape[1] - center[1]])
+    new_img = img[(center[0] - rad):(center[0] + rad), (center[1] - rad):(center[1] + rad), :]
+    # print('new_img', new_img.shape)
     if not rot == 0:
         new_img = scipy.misc.imrotate(new_img, rot)
-    new_img = crop_center(new_img, (scale,scale))
+    new_img = crop_center(new_img, (scale, scale))
     return scipy.misc.imresize(new_img, res)
+
 
 def nms(img):
     # Do non-maximum suppression on a 2D array
@@ -112,7 +118,7 @@ def nms(img):
 
 def gaussian(img, pt, sigma):
     # Draw a 2D gaussian
-    assert(sigma>0)
+    assert (sigma > 0)
 
     # Check that any part of the gaussian is in-bounds
     ul = [int(pt[0] - 3 * sigma), int(pt[1] - 3 * sigma)]
@@ -120,9 +126,9 @@ def gaussian(img, pt, sigma):
     if (ul[0] > img.shape[1] or ul[1] >= img.shape[0] or
             br[0] < 0 or br[1] < 0):
         # If not, just return the image as is
-        #print('gaussian error')
+        # print('gaussian error')
         return False
-        #return img
+        # return img
 
     # Generate gaussian
     size = 6 * sigma + 1
@@ -141,5 +147,4 @@ def gaussian(img, pt, sigma):
 
     img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
     return True
-    #return img
-
+    # return img

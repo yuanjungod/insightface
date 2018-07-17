@@ -1,6 +1,7 @@
 import numpy as np
 import skimage.draw
 
+
 def line(img, pt1, pt2, color, width):
     # Draw a line on an image
     # Make sure dimension of color matches number of channels in img
@@ -23,6 +24,7 @@ def line(img, pt1, pt2, color, width):
 
     return img
 
+
 def limb(img, pt1, pt2, color, width):
     # Specific handling of a limb, in case the annotation isn't there for one of the joints
     if pt1[0] > 0 and pt2[0] > 0:
@@ -31,6 +33,7 @@ def limb(img, pt1, pt2, color, width):
         circle(img, pt1, color, width)
     elif pt2[0] > 0:
         circle(img, pt2, color, width)
+
 
 def gaussian(img, pt, sigma):
     # Draw a 2D gaussian
@@ -60,6 +63,7 @@ def gaussian(img, pt, sigma):
 
     img[img_y[0]:img_y[1], img_x[0]:img_x[1]] = g[g_y[0]:g_y[1], g_x[0]:g_x[1]]
     return img
+
 
 def circle(img, pt, color, radius):
     # Draw a circle
