@@ -181,8 +181,8 @@ def get_symbol(args, arg_params, aux_params):
     all_label = mx.symbol.Variable('softmax_label')
     gt_label = all_label
     extra_loss = None
-    _weight = mx.symbol.Variable("fc7_weight", shape=(args.num_classes, args.emb_size), lr_mult=1.0,
-                                 wd_mult=args.fc7_wd_mult)
+    _weight = mx.symbol.Variable("fc7_weight", shape=(args.num_classes, args.emb_size), lr_mult=1.0, wd_mult=args.fc7_wd_mult)
+    print("fuck----fuck", args.num_classes, _weight, args.fc7_wd_mult)
     if args.loss_type == 0:  # softmax
         _bias = mx.symbol.Variable('fc7_bias', lr_mult=2.0, wd_mult=0.0)
         fc7 = mx.sym.FullyConnected(data=embedding, weight=_weight, bias=_bias, num_hidden=args.num_classes, name='fc7')
@@ -199,8 +199,7 @@ def get_symbol(args, arg_params, aux_params):
         assert (m > 0.0)
         _weight = mx.symbol.L2Normalization(_weight, mode='instance')
         nembedding = mx.symbol.L2Normalization(embedding, mode='instance', name='fc1n') * s
-        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes,
-                                    name='fc7')
+        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes, name='fc7')
         s_m = s * m
         gt_one_hot = mx.sym.one_hot(gt_label, depth=args.num_classes, on_value=s_m, off_value=0.0)
         fc7 = fc7 - gt_one_hot
@@ -212,8 +211,7 @@ def get_symbol(args, arg_params, aux_params):
         assert m < (math.pi / 2)
         _weight = mx.symbol.L2Normalization(_weight, mode='instance')
         nembedding = mx.symbol.L2Normalization(embedding, mode='instance', name='fc1n') * s
-        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes,
-                                    name='fc7')
+        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes, name='fc7')
         zy = mx.sym.pick(fc7, gt_label, axis=1)
         cos_t = zy / s
         cos_m = math.cos(m)
@@ -250,8 +248,7 @@ def get_symbol(args, arg_params, aux_params):
         assert s > 0.0
         _weight = mx.symbol.L2Normalization(_weight, mode='instance')
         nembedding = mx.symbol.L2Normalization(embedding, mode='instance', name='fc1n') * s
-        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes,
-                                    name='fc7')
+        fc7 = mx.sym.FullyConnected(data=nembedding, weight=_weight, no_bias=True, num_hidden=args.num_classes, name='fc7')
         if args.margin_a != 1.0 or args.margin_m != 0.0 or args.margin_b != 0.0:
             if args.margin_a == 1.0 and args.margin_m == 0.0:
                 s_m = s * args.margin_b
@@ -276,6 +273,7 @@ def get_symbol(args, arg_params, aux_params):
                 fc7 = fc7 + body
     out_list = [mx.symbol.BlockGrad(embedding)]
     softmax = mx.symbol.SoftmaxOutput(data=fc7, label=gt_label, name='softmax', normalization='valid')
+    mx.viz.plot_network(softmax).view()
     out_list.append(softmax)
     out = mx.symbol.Group(out_list)
     return out, arg_params, aux_params
@@ -353,6 +351,7 @@ def train_net(args):
         context=ctx,
         symbol=sym,
     )
+
     val_dataiter = None
 
     train_dataiter = FaceImageIter(
@@ -395,8 +394,7 @@ def train_net(args):
     def ver_test(nbatch):
         results = []
         for i in xrange(len(ver_list)):
-            acc1, std1, acc2, std2, xnorm, embeddings_list = verification.test(ver_list[i], model, args.batch_size, 10,
-                                                                               None, None)
+            acc1, std1, acc2, std2, xnorm, embeddings_list = verification.test(ver_list[i], model, args.batch_size, 10, None, None)
             print('[%s][%d]XNorm: %f' % (ver_name_list[i], nbatch, xnorm))
             # print('[%s][%d]Accuracy: %1.5f+-%1.5f' % (ver_name_list[i], nbatch, acc1, std1))
             print('[%s][%d]Accuracy-Flip: %1.5f+-%1.5f' % (ver_name_list[i], nbatch, acc2, std2))
@@ -410,7 +408,7 @@ def train_net(args):
     save_step = [0]
     if len(args.lr_steps) == 0:
         lr_steps = [40000, 60000, 80000]
-        if args.loss_type >= 1 and args.loss_type <= 7:
+        if 1 <= args.loss_type <= 7:
             lr_steps = [100000, 140000, 160000]
         p = 512.0 / args.batch_size
         for l in xrange(len(lr_steps)):

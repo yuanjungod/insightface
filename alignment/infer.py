@@ -27,7 +27,8 @@ sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
 all_layers = sym.get_internals()
 sym = all_layers['heatmap_output']
 model = mx.mod.Module(symbol=sym, context=ctx, label_names=None)
-# model.bind(data_shapes=[('data', (args.batch_size, 3, image_size[0], image_size[1]))], label_shapes=[('softmax_label', (args.batch_size,))])
+# model.bind(data_shapes=[('data', (args.batch_size, 3, image_size[0], image_size[1]))],
+# label_shapes=[('softmax_label', (args.batch_size,))])
 model.bind(data_shapes=[('data', (1, 3, image_size[0], image_size[1]))])
 model.set_params(arg_params, aux_params)
 # img_path = '/raid5data/dplearn/megaface/facescrubr/112x112/Tom_Hanks/Tom_Hanks_54745.png'
