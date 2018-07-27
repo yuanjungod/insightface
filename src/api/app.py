@@ -7,12 +7,14 @@ import base64
 import numpy as np
 import urllib
 import cv2
+import time
 from flask import Flask, render_template, request, jsonify
 
 parser = argparse.ArgumentParser(description='do verification')
 # general
 parser.add_argument('--image-size', default='112,112', help='')
-parser.add_argument('--model', default='../model/softmax,50', help='path to load model.')
+# parser.add_argument('--model', default='../model/softmax,50', help='path to load model.')
+parser.add_argument('--model', default='/Users/happy/Downloads/model-r34-amf/model,0000', help='path to load model.')
 parser.add_argument('--gpu', default=0, type=int, help='gpu id')
 parser.add_argument('--threshold', default=1.24, type=float, help='ver dist threshold')
 args = parser.parse_args()
@@ -36,6 +38,13 @@ def image_resize(image):
 
 
 def get_image(data):
+    _bin = base64.b64decode(data)
+    _bin = np.fromstring(_bin, np.uint8)
+    image = cv2.imdecode(_bin, cv2.IMREAD_COLOR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = image_resize(image)
+    return image
+
     image = None
     if 'url' in data:
         url = data['url']
@@ -72,15 +81,21 @@ def get_image(data):
 @app.route('/ver', methods=['POST'])
 def ver():
     try:
-        data = request.data
-        values = json.loads(data)
-        source_image = get_image(values['source'])
+        start = time.time()
+        # data = request.data
+        # values = json.loads(data)
+
+        source = request.values.get("source")
+        # source_image = get_image(values['source'])
+        source_image = get_image(source)
         if source_image is None:
             print('source image is None')
             return '-1'
         assert not isinstance(source_image, list)
         print(source_image.shape)
-        target_image = get_image(values['target'])
+
+        target = request.values.get("target")
+        target_image = get_image(target)
         if target_image is None:
             print('target image is None')
             return '-1'
@@ -89,14 +104,18 @@ def ver():
             target_image = [target_image]
         # print('before call')
         # ret = model.is_same_id(source_image, target_image)
-        ret = model.sim(source_image, target_image)
+        sim = model.sim(source_image, target_image)
+        # sim = 0
+        ret = model.is_same_id(source_image, target_image)
     except Exception as ex:
         print(ex)
         return '-1'
 
     # return str(int(ret))
-    print('sim', ret)
-    return "%1.3f" % ret
+    print('sim', sim)
+    print("consume time: ", time.time()-start)
+    # return "%1.3f" % ret
+    return jsonify([str(sim), str(ret)])
 
 
 if __name__ == '__main__':

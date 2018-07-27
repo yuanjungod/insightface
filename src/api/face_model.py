@@ -14,6 +14,7 @@ import sklearn
 from sklearn.decomposition import PCA
 from time import sleep
 from easydict import EasyDict as edict
+import time
 
 # import facenet
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'align'))
@@ -44,7 +45,7 @@ class FaceModel:
         model = edict()
         with tf.Graph().as_default():
             config = tf.ConfigProto()
-            config.gpu_options.per_process_gpu_memory_fraction = 0.2
+            # config.gpu_options.per_process_gpu_memory_fraction = 0.2
             sess = tf.Session(config=config)
             # sess = tf.Session()
             with sess.as_default():
@@ -63,17 +64,16 @@ class FaceModel:
         epoch = int(_vec[1])
         print('loading', prefix, epoch)
         self.model = edict()
-        self.model.ctx = mx.gpu(args.gpu)
+        self.model.ctx = mx.cpu()
+        # self.model.ctx = mx.gpu(args.gpu)
         self.model.sym, self.model.arg_params, self.model.aux_params = mx.model.load_checkpoint(prefix, epoch)
-        self.model.arg_params, self.model.aux_params = ch_dev(self.model.arg_params, self.model.aux_params,
-                                                              self.model.ctx)
+        self.model.arg_params, self.model.aux_params = ch_dev(self.model.arg_params, self.model.aux_params, self.model.ctx)
         all_layers = self.model.sym.get_internals()
         self.model.sym = all_layers['fc1_output']
 
     def get_aligned_face(self, img, force=False):
         # print('before det', img.shape)
-        bounding_boxes, points = detect_face.detect_face(img, self.det_minsize, self.pnet, self.rnet, self.onet,
-                                                         self.det_threshold, self.det_factor)
+        bounding_boxes, points = detect_face.detect_face(img, self.det_minsize, self.pnet, self.rnet, self.onet, self.det_threshold, self.det_factor)
         # if bounding_boxes.shape[0]==0:
         #  fimg = np.copy(img)
         #  do_flip(fimg)
@@ -137,8 +137,7 @@ class FaceModel:
             input_blob = np.expand_dims(_img, axis=0)
             self.model.arg_params["data"] = mx.nd.array(input_blob, self.model.ctx)
             self.model.arg_params["softmax_label"] = mx.nd.empty((1,), self.model.ctx)
-            exe = self.model.sym.bind(self.model.ctx, self.model.arg_params, args_grad=None, grad_req="null",
-                                      aux_states=self.model.aux_params)
+            exe = self.model.sym.bind(self.model.ctx, self.model.arg_params, args_grad=None, grad_req="null", aux_states=self.model.aux_params)
             exe.forward(is_train=False)
             _embedding = exe.outputs[0].asnumpy()
             # print(_embedding.shape)
@@ -157,8 +156,9 @@ class FaceModel:
         return self.get_feature_impl(face_img, norm)
 
     def is_same_id(self, source_img, target_img_list):
+        start_time = time.time()
         source_face = self.get_aligned_face(source_img, True)
-        print('source face', source_face.shape)
+        print('source face', source_face.shape, time.time()-start_time)
         target_face_list = []
         pp = 0
         for img in target_img_list:
@@ -170,7 +170,9 @@ class FaceModel:
                 target_face_list.append(target_face)
             pp += 1
         print('target face', len(target_face_list))
+        start_time = time.time()
         source_feature = self.get_feature(source_face, True)
+        print("feature time: %s" % (time.time() - start_time))
         target_feature = None
         for target_face in target_face_list:
             _feature = self.get_feature(target_face, False)
@@ -205,6 +207,7 @@ class FaceModel:
             pp += 1
         print('target face', len(target_face_list))
         source_feature = self.get_feature(source_face, True)
+        print("source feature", np.dot(source_feature, source_feature.T))
         target_feature = None
         sim_list = []
         for target_face in target_face_list:

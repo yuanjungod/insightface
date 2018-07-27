@@ -271,6 +271,8 @@ def get_symbol(args, arg_params, aux_params):
                 gt_one_hot = mx.sym.one_hot(gt_label, depth=args.num_classes, on_value=1.0, off_value=0.0)
                 body = mx.sym.broadcast_mul(gt_one_hot, diff)
                 fc7 = fc7 + body
+    else:
+        print("fuck---fuck---fuck!!!")
     out_list = [mx.symbol.BlockGrad(embedding)]
     softmax = mx.symbol.SoftmaxOutput(data=fc7, label=gt_label, name='softmax', normalization='valid')
     mx.viz.plot_network(softmax).view()
