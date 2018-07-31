@@ -20,33 +20,32 @@ tsym = None
 targ = {}
 taux = {}
 for model in [args.age_model, args.gender_model]:
-  _vec = model.split(',')
-  assert len(_vec)==2
-  prefix = _vec[0]
-  epoch = int(_vec[1])
-  print('loading',prefix, epoch)
-  sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
-  if tsym is None:
-    all_layers = sym.get_internals()
-    tsym = all_layers['fc1_output']
-  if i==0:
-    prefix = 'age'
-  else:
-    prefix = 'gender'
-  for k,v in arg_params.iteritems():
-    if k.startswith(prefix):
-      print('arg', i, k)
-      targ[k] = v
-  for k,v in aux_params.iteritems():
-    if k.startswith(prefix):
-      print('aux', i, k)
-      taux[k] = v
-  i+=1
+    _vec = model.split(',')
+    assert len(_vec) == 2
+    prefix = _vec[0]
+    epoch = int(_vec[1])
+    print('loading', prefix, epoch)
+    sym, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
+    if tsym is None:
+        all_layers = sym.get_internals()
+        tsym = all_layers['fc1_output']
+    if i == 0:
+        prefix = 'age'
+    else:
+        prefix = 'gender'
+    for k, v in arg_params.iteritems():
+        if k.startswith(prefix):
+            print('arg', i, k)
+            targ[k] = v
+    for k, v in aux_params.iteritems():
+        if k.startswith(prefix):
+            print('aux', i, k)
+            taux[k] = v
+    i += 1
 dellist = []
-#for k,v in arg_params.iteritems():
+# for k,v in arg_params.iteritems():
 #  if k.startswith('fc7'):
 #    dellist.append(k)
 for d in dellist:
-  del targ[d]
+    del targ[d]
 mx.model.save_checkpoint(args.prefix, 0, tsym, targ, taux)
-

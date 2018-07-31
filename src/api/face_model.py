@@ -52,8 +52,9 @@ class FaceModel:
                 self.pnet, self.rnet, self.onet = detect_face.create_mtcnn(sess, None)
 
         self.threshold = args.threshold
-        self.det_minsize = 50
-        self.det_threshold = [0.4, 0.6, 0.6]
+        self.det_minsize = 75
+        # self.det_threshold = [0.4, 0.6, 0.6]
+        self.det_threshold = [0.6, 0.6, 0.6]
         self.det_factor = 0.9
         _vec = args.image_size.split(',')
         assert len(_vec) == 2
@@ -119,10 +120,15 @@ class FaceModel:
         ret = []
         for i in xrange(bounding_boxes.shape[0]):
             bbox = bounding_boxes[i, 0:4]
+            # print(bbox)
+            cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 0, 255), 2)
             landmark = points[:, i].reshape((2, 5)).T
             aligned = face_preprocess.preprocess(img, bbox=bbox, landmark=landmark, image_size=str_image_size)
             aligned = np.transpose(aligned, (2, 0, 1))
             ret.append(aligned)
+        img = cv2.resize(img, (int(img.shape[1]/4), int(img.shape[0]/4)))
+        cv2.imshow("faces", img)
+        cv2.waitKey(0)
         return ret
 
     def get_feature_impl(self, face_img, norm):
@@ -215,3 +221,27 @@ class FaceModel:
             _sim = np.dot(source_feature, _feature.T)
             sim_list.append(_sim)
         return np.max(sim_list)
+
+
+if __name__ == "__main__":
+    import cv2
+    parser = argparse.ArgumentParser(description='do verification')
+    # general
+    parser.add_argument('--image-size', default='112,112', help='')
+    # parser.add_argument('--model', default='../model/softmax,50', help='path to load model.')
+    parser.add_argument('--model', default='/Users/happy/Downloads/model-r34-amf/model,0000',
+                        help='path to load model.')
+    parser.add_argument('--gpu', default=0, type=int, help='gpu id')
+    parser.add_argument('--threshold', default=1.24, type=float, help='ver dist threshold')
+    args = parser.parse_args()
+
+    model = FaceModel(args)
+    image = cv2.imread("/Users/happy/code/insightface/sample-images/t2.jpg", cv2.IMREAD_COLOR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    ret = model.get_all_faces(image)
+    for i in range(len(ret)):
+        aligned = ret[i]
+        aligned = np.transpose(aligned, (1, 2, 0))
+        aligned = cv2.cvtColor(aligned, cv2.COLOR_RGB2BGR)
+        print(aligned.shape)
+        cv2.imwrite("%s.jpg" % i, aligned)

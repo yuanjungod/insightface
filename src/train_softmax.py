@@ -275,7 +275,7 @@ def get_symbol(args, arg_params, aux_params):
         print("fuck---fuck---fuck!!!")
     out_list = [mx.symbol.BlockGrad(embedding)]
     softmax = mx.symbol.SoftmaxOutput(data=fc7, label=gt_label, name='softmax', normalization='valid')
-    mx.viz.plot_network(softmax).view()
+    # mx.viz.plot_network(softmax).view()
     out_list.append(softmax)
     out = mx.symbol.Group(out_list)
     return out, arg_params, aux_params
