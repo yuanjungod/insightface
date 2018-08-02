@@ -218,10 +218,10 @@ def get_symbol(args, arg_params, aux_params):
         sin_m = math.sin(m)
         mm = math.sin(math.pi - m) * m
         # threshold = 0.0
-        threshold = math.cos(math.pi - m)
         if args.easy_margin:
             cond = mx.symbol.Activation(data=cos_t, act_type='relu')
         else:
+            threshold = math.cos(math.pi - m)
             cond_v = cos_t - threshold
             cond = mx.symbol.Activation(data=cond_v, act_type='relu')
         body = cos_t * cos_t

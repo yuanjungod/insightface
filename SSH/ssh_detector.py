@@ -15,8 +15,7 @@ from rcnn.processing.nms import gpu_nms_wrapper
 class SSHDetector:
     def __init__(self, prefix, epoch, ctx_id=0, test_mode=False):
         self.ctx_id = ctx_id
-        # self.ctx = mx.gpu(self.ctx_id)
-        self.ctx = mx.cpu(self.ctx_id)
+        self.ctx = mx.gpu(self.ctx_id)
         self.fpn_keys = []
         fpn_stride = []
         fpn_base_size = []
@@ -55,7 +54,7 @@ class SSHDetector:
             self.model.bind(data_shape, None, for_training=False)
             self.model.set_params(arg_params, aux_params)
 
-    def detect(self, img, threshold=0.05, scales=[1.0]):
+    def detect(self, img, threshold=0.5, scales=[1.0]):
         proposals_list = []
         scores_list = []
 

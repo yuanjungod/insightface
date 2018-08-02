@@ -109,7 +109,7 @@ class FaceModel:
         db = mx.io.DataBatch(data=(data,))
         start = time.time()
         self.ga_model.forward(db, is_train=False)
-        print("tiem consume: ", time.time() - start)
+        print("time consume: ", time.time() - start)
         ret = self.ga_model.get_outputs()[0].asnumpy()
         g = ret[:, 0:2].flatten()
         gender = np.argmax(g)

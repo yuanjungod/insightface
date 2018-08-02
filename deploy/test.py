@@ -1,3 +1,4 @@
+# -*- coding: UTF-8
 import face_model
 import argparse
 import cv2
@@ -16,10 +17,14 @@ parser.add_argument('--threshold', default=1.24, type=float, help='ver dist thre
 args = parser.parse_args()
 
 model = face_model.FaceModel(args)
-img = cv2.imread('/Users/happy/Downloads/train_data/train/529/train_7.jpg')
+# img = cv2.imread('/Users/happy/Downloads/微信图片_20180612170959.jpg')
+img = cv2.imread('/Users/happy/code/insightface/sample-images/t1.jpg')
 img = model.get_input(img)
 # f1 = model.get_feature(img)
 # print(f1[0:10])
+if img is None:
+    print("can not find face!!!")
+    exit()
 gender, age = model.get_ga(img)
 print(gender)
 print(age)
